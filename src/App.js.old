@@ -1,0 +1,105 @@
+import React, { useState, useEffect } from 'react';
+import { createAlchemyWeb3, AlchemyProvider } from "@alch/alchemy-web3";
+
+import { ethers } from 'ethers';
+
+const BAYC_CONTRACT_ADDRESS = '0xbc4ca0eda7647a8ab7c2061c2e118a18a936f13d'; // Replace with the actual BAYC contract address
+const YOUR_API_KEY = process.env.ALCHEMY_API_KEY;
+//const BAYC_ADDRESS = "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D";
+// const USER_ADDRESS = "0x441c5d77Fb66C185235844A1036e02b8C425D7E3";
+const musicFiles = [
+  {
+    title: 'Song 1',
+    source: 'https://example.com/song1.mp3', // Replace with the actual URL of your music file
+  },
+  {
+    title: 'Song 2',
+    source: 'https://example.com/song2.mp3', // Replace with the actual URL of your music file
+  },
+  // Add more music files as needed
+];
+
+const App = () => {
+  const [userHasAccess, setUserHasAccess] = useState(false);
+
+  useEffect(() => {
+
+    // Initialize Alchemy SDK
+const alchemyUrl = "https://eth-mainnet.alchemyapi.io/v2/YOUR_API_KEY"; // Replace with your Alchemy API URL
+const web3 = createAlchemyWeb3(new AlchemyProvider(alchemyUrl));
+
+// Function to check if the user owns BAYC NFTs
+const checkAccess = async () => {
+  try {
+    // Replace 'userAddress' with the user's Ethereum address
+    const userAddress = "0x441c5d77Fb66C185235844A1036e02b8C425D7E3"; // Replace with the user's actual address
+
+    // Query BAYC contract to check NFT balance for the user
+    const baycContract = new web3.eth.Contract(
+      ['function balanceOf(address) view returns (uint256)'],
+      BAYC_CONTRACT_ADDRESS
+    );
+    const userNFTBalance = await baycContract.methods.balanceOf(userAddress).call();
+
+    // If the user owns at least one NFT from BAYC, grant access
+    if (userNFTBalance > 0) {
+      setUserHasAccess(true);
+    } else {
+      setUserHasAccess(false);
+    }
+  } catch (error) {
+    console.error(error);
+    setUserHasAccess(false);
+  }
+};
+
+    checkAccess();
+  }, []);
+
+  return (
+    <div>
+{userHasAccess ? (
+  <div>
+    <h2>Access Granted!</h2>
+    <button onClick={handleDisconnect}>Disconnect</button>
+    <ul>
+      {musicFiles.map((file, index) => (
+        <li key={index}>
+          <p>{file.title}</p>
+          <audio controls>
+            <source src={file.source} type="audio/mpeg" />
+            Your browser does not support the audio element.
+          </audio>
+        </li>
+      ))}
+    </ul>
+  </div>
+) : (
+  <div>
+    <p>Enter your wallet address and NFT collection address to access the content:</p>
+    <input
+      type="text"
+      placeholder="Your Wallet Address"
+      value={userAddress}
+      onChange={(e) => setUserAddress(e.target.value)}
+    />
+    <input
+      type="text"
+      placeholder="NFT Collection Address"
+      value={collectionAddress}
+      onChange={(e) => setCollectionAddress(e.target.value)}
+    />
+    <button onClick={handleEntry}>Enter</button>
+    {userHasAccess === false && (
+      <div>
+        <h2>Sorry, you don't have access to this content.</h2>
+        <p>Make sure you own the NFTs to access this content.</p>
+      </div>
+    )}
+  </div>
+)}
+    </div>
+  );
+};
+
+export default App;
